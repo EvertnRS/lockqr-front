@@ -49,10 +49,18 @@ export function Doors() {
         isOpen: form.isOpen,
       });
     } else {
-      await api.post("/doors", form);
-      await deviceApi.post("/new-lock", {
-        id: form.id
-      });
+
+      try {
+        await deviceApi.post("/new-lock", {
+          id: form.id
+        });
+
+        await api.post("/doors", form);
+
+        await loadDoors();
+      } catch (error) {
+        alert("Limite de portas atingido. Remova uma porta existente para cadastrar uma nova.");
+      }
     }
 
     setForm(initialForm);
