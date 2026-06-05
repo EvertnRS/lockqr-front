@@ -1,6 +1,6 @@
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { AppLayout } from "../components/AppLayout";
-import { api } from "../service/api";
+import { api, deviceApi } from "../service/api";
 import type { Door } from "../@types/Door";
 
 type DoorFormData = {
@@ -28,6 +28,8 @@ export function Doors() {
 
   async function loadDoors() {
     const response = await api.get<Door[]>("/doors");
+    console.log(response.data);
+
     setDoors(response.data);
   }
 
@@ -48,6 +50,9 @@ export function Doors() {
       });
     } else {
       await api.post("/doors", form);
+      await deviceApi.post("/new-lock", {
+        id: form.id
+      });
     }
 
     setForm(initialForm);
@@ -65,6 +70,24 @@ export function Doors() {
       active: door.active,
       isOpen: !!door.isOpen,
     });
+  }
+
+  async function handleOpen(id: String) {
+    const confirmed = confirm("Deseja abrir esta porta?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    await deviceApi.post("/open", {
+      porta: id
+    });
+
+    await loadDoors();
+
+    setTimeout(async () => {
+    await loadDoors();
+  }, 15000);
   }
 
   async function handleDelete(id: string) {
@@ -207,6 +230,9 @@ export function Doors() {
                     <div className="actions">
                       <button className="secondary-button" onClick={() => handleEdit(door)}>
                         Editar
+                      </button>
+                      <button className="secondary-button" onClick={() => handleOpen(door.id)}>
+                        Abrir
                       </button>
                       <button className="danger-button" onClick={() => handleDelete(door.id)}>
                         Remover
