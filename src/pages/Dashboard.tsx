@@ -53,12 +53,35 @@ export function Dashboard() {
     }
   }
 
+  async function handleOpen(door: Door) {
+    const confirmed = confirm(`Deseja abrir a porta ${door.name}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.put(`/doors/${door.id}`, {
+        isOpen: true,
+      });
+
+      await loadMetrics();
+
+      setTimeout(async () => {
+        await loadMetrics();
+      }, 25000);
+    } catch {
+      alert("Não foi possível abrir a porta.");
+    }
+  }
+
   useEffect(() => {
     loadMetrics();
   }, [user?.id, isAdmin]);
 
   const openDoorsTotal = doors.filter(isDoorOpen).length;
   const closedDoorsTotal = doors.length - openDoorsTotal;
+
   const pageSubtitle = isAdmin
     ? "Visão geral do sistema LockQR."
     : "Somente suas portas liberadas aparecem neste painel.";
@@ -74,8 +97,12 @@ export function Dashboard() {
 
       <div className="grid grid-3">
         <div className="metric-card">
-          <div className="metric-title">{isAdmin ? "Usuários cadastrados" : "Minhas portas"}</div>
-          <div className="metric-value">{isAdmin ? usersTotal : doors.length}</div>
+          <div className="metric-title">
+            {isAdmin ? "Usuários cadastrados" : "Minhas portas"}
+          </div>
+          <div className="metric-value">
+            {isAdmin ? usersTotal : doors.length}
+          </div>
         </div>
 
         <div className="metric-card">
@@ -95,8 +122,12 @@ export function Dashboard() {
         </div>
 
         <div className="locker-legend">
-          <span className="legend-chip legend-chip-open">Abertas: {openDoorsTotal}</span>
-          <span className="legend-chip legend-chip-closed">Fechadas: {closedDoorsTotal}</span>
+          <span className="legend-chip legend-chip-open">
+            Abertas: {openDoorsTotal}
+          </span>
+          <span className="legend-chip legend-chip-closed">
+            Fechadas: {closedDoorsTotal}
+          </span>
         </div>
 
         {isLoading ? (
@@ -111,14 +142,40 @@ export function Dashboard() {
               return (
                 <div key={door.id} className="locker-cell">
                   <div className="locker-frame">
-                    <div className={doorOpen ? "locker-door is-open" : "locker-door"}>
+                    <div
+                      className={
+                        doorOpen
+                          ? "locker-door is-open"
+                          : "locker-door"
+                      }
+                    >
                       <span className="locker-handle" />
                     </div>
                   </div>
-                  <div className="locker-door-name">{door.name || door.id}</div>
-                  <div className={doorOpen ? "badge badge-active" : "badge badge-inactive"}>
+
+                  <div className="locker-door-name">
+                    {door.name || door.id}
+                  </div>
+
+                  <div
+                    className={
+                      doorOpen
+                        ? "badge badge-active"
+                        : "badge badge-inactive"
+                    }
+                  >
                     {doorOpen ? "Aberta" : "Fechada"}
                   </div>
+
+                  {!doorOpen && (
+                    <button
+                      className="secondary-button"
+                      style={{ marginTop: 10 }}
+                      onClick={() => handleOpen(door)}
+                    >
+                      Abrir
+                    </button>
+                  )}
                 </div>
               );
             })}

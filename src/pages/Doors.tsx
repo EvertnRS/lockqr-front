@@ -77,22 +77,24 @@ export function Doors() {
   }
 
   async function handleOpen(door: Door) {
-    const confirmed = confirm("Deseja abrir esta porta?");
+  const confirmed = confirm("Deseja abrir esta porta?");
 
-    if (!confirmed) {
-      return;
-    }
-
-    setEditingDoorId(door.id);
-    setForm({
-      id: door.id,
-      name: door.name,
-      description: door.description || "",
-      location: door.location || "",
-      active: door.active,
-      isOpen: !!true,
-    });
+  if (!confirmed) {
+    return;
   }
+
+  await api.put(`/doors/${door.id}`, {
+    isOpen: true,
+  });
+
+  await loadDoors();
+
+  async() => {
+    setTimeout(async () => {
+      await loadDoors();
+    }, 30000);
+  }
+}
 
   async function handleDelete(id: string) {
     const confirmed = confirm("Deseja remover esta porta?");
